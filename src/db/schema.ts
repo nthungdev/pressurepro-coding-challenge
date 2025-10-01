@@ -11,9 +11,9 @@ import {
 
 export const usersTable = pgTable("users", {
   id: uuid().primaryKey().defaultRandom(),
-  name: varchar({ length: 255 }).notNull(),
   email: varchar({ length: 255 }).notNull().unique(),
   passwordHash: varchar({ length: 255 }).notNull(),
+  name: varchar({ length: 255 }),
 });
 
 export const conferencesTable = pgTable("conferences", {
@@ -50,9 +50,7 @@ export const userFavoriteConferencesTable = pgTable(
       .references(() => conferencesTable.id)
       .notNull(),
   },
-  (table) => ({
-    pk: primaryKey({ columns: [table.userId, table.conferenceId] }),
-  }),
+  (table) => [primaryKey({ columns: [table.userId, table.conferenceId] })],
 );
 
 export const tagsTable = pgTable("tags", {
