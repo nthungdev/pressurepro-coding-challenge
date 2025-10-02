@@ -11,6 +11,7 @@ import {
   INVALID_CREDENTIAL,
   INVALID_PROPERTIES,
 } from "@/lib/error-messages";
+import { createSession } from "@/lib/session";
 
 const signInSchema = z.object({
   email: z.email(),
@@ -48,6 +49,11 @@ export async function POST(request: NextRequest) {
     if (!correctPassword) {
       return createErrorResponse({ message: INVALID_CREDENTIAL }, 400);
     }
+
+    await createSession({
+      email,
+      userId: user.id,
+    });
 
     return createSuccessResponse<SignInPostResponseData>({
       id: user.id,
