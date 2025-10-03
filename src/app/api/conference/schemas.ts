@@ -1,6 +1,6 @@
 import z from "zod";
 
-const conferenceSchema = z.object({
+export const conferenceSchema = z.object({
   name: z.string(),
   description: z.string(),
   date: z.iso.datetime(),

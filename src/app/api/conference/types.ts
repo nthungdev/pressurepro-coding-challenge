@@ -1,10 +1,24 @@
-import { createConferenceSchema } from "@/app/api/conference/schemas";
 import type { ApiResponse } from "@/lib/api-response";
-import type z from "zod";
+import type { conferenceSpeakersTable } from "@/db/schema";
 
-export type ConferencePostResponseData = z.infer<
-  typeof createConferenceSchema
-> & { id: string };
+export type ConferenceSpeaker = Omit<
+  typeof conferenceSpeakersTable.$inferSelect,
+  "conferenceId"
+>;
+export type Conference = {
+  id: string;
+  name: string;
+  description: string;
+  location: string;
+  price: number;
+  maxAttendees: number;
+  isFeatured: boolean;
+  speakers: ConferenceSpeaker[];
+  tags: string[];
+  date: Date;
+};
+
+export type ConferencePostResponseData = Conference;
 
 export type ConferencePostResponse = ApiResponse<ConferencePostResponseData>;
 

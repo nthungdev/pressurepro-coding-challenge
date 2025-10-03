@@ -12,55 +12,46 @@ import {
   INVALID_PROPERTIES,
 } from "@/lib/error-messages";
 import { createSession } from "@/lib/session";
+import { withErrorHandling } from "@/lib/api-utils";
+import ApiError from "@/lib/api-error";
 
 const signInSchema = z.object({
   email: z.email(),
   password: z.string().min(8),
 });
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const validation = signInSchema.safeParse(body);
-    if (!validation.success) {
-      return createErrorResponse(
-        {
-          message: INVALID_PROPERTIES,
-          detail: z.flattenError(validation.error),
-        },
-        400,
-      );
-    }
-
-    const { email, password } = validation.data;
-
-    const queryUserResult = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.email, email))
-      .limit(1);
-    const user = queryUserResult?.[0];
-    if (!user) {
-      return createErrorResponse({ message: INVALID_CREDENTIAL }, 400);
-    }
-
-    const correctPassword = await bcrypt.compare(password, user.passwordHash);
-
-    if (!correctPassword) {
-      return createErrorResponse({ message: INVALID_CREDENTIAL }, 400);
-    }
-
-    await createSession({
-      email,
-      userId: user.id,
-    });
-
-    return createSuccessResponse<SignInPostResponseData>({
-      id: user.id,
-      email: user.email,
-    });
-  } catch (error) {
-    console.error(error);
-    return createErrorResponse({ message: INTERNAL }, 500);
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  const body = await request.json();
+  const validation = signInSchema.safeParse(body);
+  if (!validation.success) {
+    throw new ApiError(INVALID_PROPERTIES, 400);
   }
-}
+
+  const { email, password } = validation.data;
+
+  const queryUserResult = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.email, email))
+    .limit(1);
+  const user = queryUserResult?.[0];
+  if (!user) {
+    throw new ApiError(INVALID_CREDENTIAL, 400);
+  }
+
+  const correctPassword = await bcrypt.compare(password, user.passwordHash);
+
+  if (!correctPassword) {
+    throw new ApiError(INVALID_CREDENTIAL, 400);
+  }
+
+  await createSession({
+    email,
+    userId: user.id,
+  });
+
+  return createSuccessResponse<SignInPostResponseData>({
+    id: user.id,
+    email: user.email,
+  });
+});

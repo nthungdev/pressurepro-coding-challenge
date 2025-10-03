@@ -12,12 +12,15 @@ export type ErrorApiResponse<T = undefined> = {
 
 export type SuccessApiResponse<T = undefined> = {
   success: true;
-  data: T;
+  data?: T;
 };
 
 export type ApiResponse<T> = ErrorApiResponse | SuccessApiResponse<T>;
 
-export function createSuccessResponse<T>(data: T, status: number = 200) {
+export function createSuccessResponse<T = undefined>(
+  data?: T,
+  status: number = 200,
+) {
   return NextResponse.json<SuccessApiResponse<T>>(
     {
       success: true,

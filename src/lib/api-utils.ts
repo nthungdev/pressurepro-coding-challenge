@@ -1,10 +1,14 @@
 import "server-only";
 import { createErrorResponse } from "@/lib/api-response";
-import { INVALID_PROPERTIES } from "@/lib/error-messages";
-import type { NextRequest } from "next/server";
+import {
+  INTERNAL,
+  INVALID_BODY,
+  INVALID_PROPERTIES,
+} from "@/lib/error-messages";
+import type { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 import type { AppRouteHandlerRoutes } from "../../.next/types/routes";
-import type { PgSelect } from "drizzle-orm/pg-core";
+import ApiError from "@/lib/api-error";
 
 /**
  * Higher order function to validate the request's body
@@ -18,10 +22,16 @@ export function withBodyValidator<
     data: z.infer<T>,
     request: NextRequest,
     ctx: RouteContext<R>,
-  ) => Promise<unknown>,
+  ) => Promise<NextResponse>,
 ) {
   return async (request: NextRequest, ctx: RouteContext<R>) => {
-    const body = await request.json();
+    const body = await request.json().catch((error) => {
+      if (error instanceof SyntaxError) {
+        throw new ApiError(INVALID_BODY, 400);
+      }
+      throw error;
+    });
+
     const validation = schema.safeParse(body);
     if (!validation.success) {
       return createErrorResponse(
@@ -38,16 +48,25 @@ export function withBodyValidator<
 }
 
 /**
- * Add pagination to select queries. Need to convert the query to dynamic.
- * ```
- * const query = db.select().from(conferencesTable)
- * withPagination(query.$dynamic(), page, pageSize);
- * ```
+ * Handle uncaught errors and API errors that we want to include in the API response.
+ * Any non ApiError are exposed as internal server error to the consumers.
  */
-export function withPagination<T extends PgSelect>(
-  qb: T,
-  page: number,
-  pageSize: number,
+export function withErrorHandling<R extends AppRouteHandlerRoutes>(
+  handler: (req: NextRequest, ctx: RouteContext<R>) => Promise<NextResponse>,
 ) {
-  return qb.limit(pageSize).offset((page - 1) * pageSize);
+  return async (req: NextRequest, ctx: RouteContext<R>) => {
+    try {
+      return await handler(req, ctx);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        return createErrorResponse(
+          { message: error.message },
+          error.statusCode,
+        );
+      }
+      // unexpected errors
+      console.error(error);
+      return createErrorResponse({ message: INTERNAL }, 500);
+    }
+  };
 }
