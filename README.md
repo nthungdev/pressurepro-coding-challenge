@@ -16,7 +16,7 @@ pnpm dev
 
 ## Scripts
 
-Apply database schemas
+Apply database schemas changes
 
 ```sh
 npx drizzle-kit push

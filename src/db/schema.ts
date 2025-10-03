@@ -1,6 +1,7 @@
 import {
   boolean,
-  numeric,
+  decimal,
+  integer,
   pgTable,
   primaryKey,
   text,
@@ -22,9 +23,9 @@ export const conferencesTable = pgTable("conferences", {
   description: text().notNull(),
   date: timestamp({ withTimezone: true }).notNull(),
   location: varchar({ length: 255 }).notNull(),
-  price: numeric().notNull(),
+  price: decimal().notNull(),
   imageUrl: varchar(),
-  maxAttendees: numeric().notNull(),
+  maxAttendees: integer().notNull(),
   isFeatured: boolean().default(false).notNull(),
 });
 
@@ -36,7 +37,7 @@ export const conferenceSpeakersTable = pgTable("conference_speakers", {
   bio: text().notNull(),
   avatarUrl: varchar(),
   conferenceId: uuid()
-    .references(() => conferencesTable.id)
+    .references(() => conferencesTable.id, { onDelete: "cascade" })
     .notNull(),
 });
 
@@ -47,10 +48,23 @@ export const userFavoriteConferencesTable = pgTable(
       .references(() => usersTable.id)
       .notNull(),
     conferenceId: uuid()
-      .references(() => conferencesTable.id)
+      .references(() => conferencesTable.id, { onDelete: "cascade" })
       .notNull(),
   },
   (table) => [primaryKey({ columns: [table.userId, table.conferenceId] })],
+);
+
+export const conferenceTagsTable = pgTable(
+  "conference_tags",
+  {
+    conferenceId: uuid()
+      .references(() => conferencesTable.id, { onDelete: "cascade" })
+      .notNull(),
+    tagId: uuid()
+      .references(() => tagsTable.id)
+      .notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.conferenceId, table.tagId] })],
 );
 
 export const tagsTable = pgTable("tags", {
