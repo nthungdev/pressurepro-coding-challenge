@@ -6,6 +6,7 @@ import { createSuccessResponse } from "@/lib/api-response";
 import { conferenceTagsTable, tagsTable } from "@/db/schema";
 import type { ConferenceTagsPutResponseData } from "@/app/api/conference/types";
 
+// Set tags of a conference
 export const PUT = withErrorHandling(
   withBodyValidator(
     createTagsSchema,

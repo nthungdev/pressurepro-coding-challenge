@@ -28,3 +28,17 @@ export const updateConferenceSchema = conferenceSchema
 export const createTagsSchema = z.object({
   tags: z.array(z.string()).nonempty(),
 });
+
+export const createSpeakerSchema = z.object({
+  name: z.string(),
+  title: z.string(),
+  company: z.string(),
+  bio: z.string(),
+});
+
+export const updateSpeakerSchema = createSpeakerSchema
+  .partial()
+  .refine((data) => Object.values(data).some((value) => value !== undefined), {
+    message: "At least one property must be provided",
+    path: [], // attach the error to the root
+  });

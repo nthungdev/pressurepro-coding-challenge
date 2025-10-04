@@ -13,6 +13,7 @@ import type { ConferencePostResponseData } from "@/app/api/conference/types";
 import { formatConference, getConferences } from "@/lib/query";
 import ApiError from "@/lib/api-error";
 
+// Get a conference by Id
 export const GET = withErrorHandling(
   async (_: NextRequest, ctx: RouteContext<"/api/conference/[id]">) => {
     const { id } = await ctx.params;
@@ -22,6 +23,7 @@ export const GET = withErrorHandling(
   },
 );
 
+// Create a new conference
 export const POST = withErrorHandling(
   withBodyValidator(createConferenceSchema, async (data, _) => {
     const insertConferenceResult = await db
@@ -48,6 +50,7 @@ export const POST = withErrorHandling(
   }),
 );
 
+// Delete a conference
 export const DELETE = withErrorHandling(
   async (_: NextRequest, ctx: RouteContext<"/api/conference/[id]">) => {
     const { id } = await ctx.params;
@@ -63,6 +66,7 @@ export const DELETE = withErrorHandling(
   },
 );
 
+// Update a conference
 export const PATCH = withErrorHandling(
   withBodyValidator(
     updateConferenceSchema,

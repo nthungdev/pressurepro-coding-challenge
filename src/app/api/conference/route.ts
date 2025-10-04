@@ -10,6 +10,7 @@ import { conferencesTable } from "@/db/schema";
 
 const DEFAULT_PAGE_SIZE = 20;
 
+// Get a list of conferences
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const { searchParams } = request.nextUrl;
   const page = Number(searchParams.get("page") ?? 1);
@@ -41,6 +42,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   });
 });
 
+// Create a new conference
 export const POST = withErrorHandling(
   withBodyValidator(createConferenceSchema, async (data, _) => {
     const insertConferenceResult = await db
