@@ -5,7 +5,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { use } from "react";
 import type { ConferenceByIdGetResponse } from "@/app/api/conference/types";
-import { Button } from "@/components/ui/button";
+import JoinConferenceButton from "@/components/join-conference-button";
 import { deserializeConference, formatDate, formatPrice } from "@/lib/data";
 
 async function fetchConferenceById(id: string) {
@@ -114,9 +114,7 @@ export default function ConferencePage({
           <div className="w-full absolute md:sticky bottom-0 md:top-0 right-0 pt-8 md:py-8">
             <div className="md:max-w-sm bg-white p-8 text-center border rounded-xl space-y-4">
               <div className="text-3xl">{formattedPrice}</div>
-              <Button className="w-full" variant="secondary">
-                <span className="font-bold text-lg">Join</span>
-              </Button>
+              <JoinConferenceButton conferenceId={conference.id} />
             </div>
           </div>
         </div>

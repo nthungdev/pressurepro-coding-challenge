@@ -6,6 +6,8 @@ import {
   conferencesTable,
   conferenceTagsTable,
   tagsTable,
+  userFavoriteConferencesTable,
+  userJoinConferencesTable,
 } from "@/db/schema";
 import { db } from "@/lib/drizzle";
 import "server-only";
@@ -141,4 +143,22 @@ export function formatConference(conference: AggregatedConference): Conference {
     tags: conference.tags,
     price: Number(conference.price),
   };
+}
+
+export async function getJoinedConferences(userId: string) {
+  const result = await db
+    .select()
+    .from(userJoinConferencesTable)
+    .where(eq(userJoinConferencesTable.userId, userId));
+
+  return result.map((r) => ({ id: r.conferenceId }));
+}
+
+export async function getFavoriteConferences(userId: string) {
+  const result = await db
+    .select()
+    .from(userFavoriteConferencesTable)
+    .where(eq(userFavoriteConferencesTable.userId, userId));
+
+  return result.map((r) => ({ id: r.conferenceId }));
 }

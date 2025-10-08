@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { getFavoriteConferences, getJoinedConferences } from "@/lib/query";
 import { verifySession } from "@/lib/session";
 import AuthProvider from "@/providers/auth-provider";
+import ConferenceProvider from "@/providers/conference-provider";
 import ReactQueryProvider from "@/providers/react-query-provider";
 
 const geistSans = Geist({
@@ -27,13 +29,27 @@ export default async function RootLayout({
 }>) {
   const session = await verifySession();
 
+  const joinedIds = session.isAuth
+    ? (await getJoinedConferences(session.userId)).map((c) => c.id)
+    : [];
+  const favoriteConferences = session.isAuth
+    ? (await getFavoriteConferences(session.userId)).map((c) => c.id)
+    : [];
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ReactQueryProvider>
-          <AuthProvider value={session}>{children}</AuthProvider>
+          <AuthProvider value={session}>
+            <ConferenceProvider
+              favoriteIds={favoriteConferences}
+              joinedIds={joinedIds}
+            >
+              {children}
+            </ConferenceProvider>
+          </AuthProvider>
         </ReactQueryProvider>
       </body>
     </html>
