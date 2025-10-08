@@ -1,7 +1,9 @@
+import { and, eq } from "drizzle-orm";
+import z from "zod";
 import { updateSpeakerSchema } from "@/app/api/conference/schemas";
 import { conferenceSpeakersTable } from "@/db/schema";
 import ApiError from "@/lib/api-error";
-import { createSuccessResponse } from "@/lib/api-response";
+import { createErrorResponse, createSuccessResponse } from "@/lib/api-response";
 import {
   withAuthenticatedRequired,
   withBodyValidator,
@@ -10,10 +12,10 @@ import {
 import { db } from "@/lib/drizzle";
 import {
   CONFERENCE_SPEAKER_NOT_EXIST,
+  INVALID_QUERY_PARAMS,
   NO_PERMISSION,
 } from "@/lib/error-messages";
 import { getConferences } from "@/lib/query";
-import { and, eq } from "drizzle-orm";
 
 // Remove a speaker from a conference
 export const DELETE = withErrorHandling(
@@ -24,6 +26,22 @@ export const DELETE = withErrorHandling(
         ctx: RouteContext<"/api/conference/[id]/speaker/[speakerId]">,
       ) => {
         const { id: conferenceId, speakerId } = await ctx.params;
+
+        const validation = z
+          .object({
+            conferenceId: z.uuid(),
+            speakerId: z.uuid(),
+          })
+          .safeParse({ conferenceId, speakerId });
+        if (!validation.success) {
+          return createErrorResponse(
+            {
+              message: INVALID_QUERY_PARAMS,
+              detail: z.flattenError(validation.error),
+            },
+            400,
+          );
+        }
 
         const conferences = await getConferences({
           id: conferenceId,
@@ -63,10 +81,26 @@ export const PATCH = withErrorHandling(
           _,
           ctx: RouteContext<"/api/conference/[id]/speaker/[speakerId]">,
         ) => {
-          const { id } = await ctx.params;
+          const { id: conferenceId, speakerId } = await ctx.params;
+
+          const validation = z
+            .object({
+              conferenceId: z.uuid(),
+              speakerId: z.uuid(),
+            })
+            .safeParse({ conferenceId, speakerId });
+          if (!validation.success) {
+            return createErrorResponse(
+              {
+                message: INVALID_QUERY_PARAMS,
+                detail: z.flattenError(validation.error),
+              },
+              400,
+            );
+          }
 
           const conferences = await getConferences({
-            id,
+            id: conferenceId,
             pageSize: 1,
             page: 1,
           });
@@ -78,7 +112,12 @@ export const PATCH = withErrorHandling(
           await db
             .update(conferenceSpeakersTable)
             .set(data)
-            .where(eq(conferenceSpeakersTable.id, id));
+            .where(
+              and(
+                eq(conferenceSpeakersTable.id, speakerId),
+                eq(conferenceSpeakersTable.conferenceId, conferenceId),
+              ),
+            );
           return createSuccessResponse(undefined);
         },
     ),

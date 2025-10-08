@@ -1,5 +1,8 @@
 import "server-only";
 
+import type { NextRequest, NextResponse } from "next/server";
+import z from "zod";
+import ApiError from "@/lib/api-error";
 import { createErrorResponse } from "@/lib/api-response";
 import {
   INTERNAL,
@@ -7,11 +10,8 @@ import {
   INVALID_PROPERTIES,
   NO_PERMISSION,
 } from "@/lib/error-messages";
-import type { NextRequest, NextResponse } from "next/server";
-import z from "zod";
-import type { AppRouteHandlerRoutes } from "../../.next/types/routes";
-import ApiError from "@/lib/api-error";
 import { type AuthenticatedSessionResult, verifySession } from "@/lib/session";
+import type { AppRouteHandlerRoutes } from "../../.next/types/routes";
 
 /**
  * Higher order function to validate the request's body

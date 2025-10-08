@@ -36,3 +36,10 @@ export type ConferenceGetResponseData = {
 };
 
 export type ConferenceGetResponse = ApiResponse<ConferenceGetResponseData>;
+
+export type ConferenceByIdGetResponseData = {
+  conference: SerializedConference | null;
+};
+
+export type ConferenceByIdGetResponse =
+  ApiResponse<ConferenceByIdGetResponseData>;

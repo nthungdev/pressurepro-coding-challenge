@@ -1,4 +1,8 @@
-import { Conference, SerializedConference } from "@/app/api/conference/types";
+import { format } from "date-fns";
+import type {
+  Conference,
+  SerializedConference,
+} from "@/app/api/conference/types";
 
 export function parseIsoDate(dateString: string): Date | null {
   const date = new Date(dateString);
@@ -37,4 +41,17 @@ export function deserializeConference(
     ...serializedConference,
     date: new Date(serializedConference.date),
   };
+}
+
+export function formatPrice(amount: number) {
+  const formatted = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(amount);
+  return formatted;
+}
+
+export function formatDate(date: Date, variant: "full" | "date" = "full") {
+  if (variant === "full") return format(date, "MMMM d '·' haaa");
+  else return format(date, "EEEE, MMMM d");
 }

@@ -1,27 +1,46 @@
-import ApiError from "@/lib/api-error";
-import { conferencesTable } from "@/db/schema";
-import { CONFERENCE_NOT_EXIST, NO_PERMISSION } from "@/lib/error-messages";
-import { createSuccessResponse } from "@/lib/api-response";
-import { db } from "@/lib/drizzle";
 import { eq } from "drizzle-orm";
-import { getConferences } from "@/lib/query";
 import type { NextRequest } from "next/server";
+import z from "zod";
+import { updateConferenceSchema } from "@/app/api/conference/schemas";
+import type { ConferenceByIdGetResponseData } from "@/app/api/conference/types";
+import { conferencesTable } from "@/db/schema";
+import ApiError from "@/lib/api-error";
+import { createErrorResponse, createSuccessResponse } from "@/lib/api-response";
 import {
   withAuthenticatedRequired,
   withBodyValidator,
   withErrorHandling,
 } from "@/lib/api-utils";
-import { updateConferenceSchema } from "@/app/api/conference/schemas";
 import { serializeConference } from "@/lib/data";
+import { db } from "@/lib/drizzle";
+import {
+  CONFERENCE_NOT_EXIST,
+  INVALID_QUERY_PARAMS,
+  NO_PERMISSION,
+} from "@/lib/error-messages";
+import { getConferences } from "@/lib/query";
 
 // Get a conference by Id
 export const GET = withErrorHandling(
   async (_: NextRequest, ctx: RouteContext<"/api/conference/[id]">) => {
     const { id } = await ctx.params;
+
+    const validation = z.uuid().safeParse(id);
+    if (!validation.success) {
+      return createErrorResponse(
+        {
+          message: INVALID_QUERY_PARAMS,
+          detail: z.flattenError(validation.error),
+        },
+        400,
+      );
+    }
+
     const conferences = await getConferences({ id, page: 1, pageSize: 1 });
-    const conference = conferences?.[0];
-    return createSuccessResponse({
-      conference: serializeConference(conference),
+    const conference = conferences?.[0] || null;
+
+    return createSuccessResponse<ConferenceByIdGetResponseData>({
+      conference: conference && serializeConference(conference),
     });
   },
 );
@@ -32,6 +51,17 @@ export const DELETE = withErrorHandling(
     (session) =>
       async (_: NextRequest, ctx: RouteContext<"/api/conference/[id]">) => {
         const { id } = await ctx.params;
+
+        const validation = z.uuid().safeParse(id);
+        if (!validation.success) {
+          return createErrorResponse(
+            {
+              message: INVALID_QUERY_PARAMS,
+              detail: z.flattenError(validation.error),
+            },
+            400,
+          );
+        }
 
         const conferences = await getConferences({
           id,
@@ -63,6 +93,17 @@ export const PATCH = withErrorHandling(
       updateConferenceSchema,
       (data) => async (_, ctx: RouteContext<"/api/conference/[id]">) => {
         const { id } = await ctx.params;
+
+        const validation = z.uuid().safeParse(id);
+        if (!validation.success) {
+          return createErrorResponse(
+            {
+              message: INVALID_QUERY_PARAMS,
+              detail: z.flattenError(validation.error),
+            },
+            400,
+          );
+        }
 
         const conferences = await getConferences({
           id,

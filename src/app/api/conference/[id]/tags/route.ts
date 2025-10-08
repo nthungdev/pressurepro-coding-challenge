@@ -1,17 +1,17 @@
 import { and, eq, inArray, notInArray } from "drizzle-orm";
-import { db } from "@/lib/drizzle";
+import { createTagsSchema } from "@/app/api/conference/schemas";
+import type { ConferenceTagsPutResponseData } from "@/app/api/conference/types";
+import { conferenceTagsTable, tagsTable } from "@/db/schema";
+import ApiError from "@/lib/api-error";
+import { createSuccessResponse } from "@/lib/api-response";
 import {
   withAuthenticatedRequired,
   withBodyValidator,
   withErrorHandling,
 } from "@/lib/api-utils";
-import { createTagsSchema } from "@/app/api/conference/schemas";
-import { createSuccessResponse } from "@/lib/api-response";
-import { conferenceTagsTable, tagsTable } from "@/db/schema";
-import type { ConferenceTagsPutResponseData } from "@/app/api/conference/types";
-import { getConferences } from "@/lib/query";
+import { db } from "@/lib/drizzle";
 import { NO_PERMISSION } from "@/lib/error-messages";
-import ApiError from "@/lib/api-error";
+import { getConferences } from "@/lib/query";
 
 // Set tags of a conference
 export const PUT = withErrorHandling(
