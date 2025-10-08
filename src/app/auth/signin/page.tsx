@@ -49,8 +49,8 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="bg-secondary sm:bg-primary min-h-screen flex items-center justify-center">
-      <div className="p-8 w-full max-w-full sm:max-w-sm  mx-auto bg-secondary space-y-8">
+    <div className="bg-primary-foreground sm:bg-accent min-h-screen flex items-center justify-center">
+      <div className="p-8 w-full max-w-full sm:max-w-sm  mx-auto bg-primary-foreground space-y-8">
         <div className="text-4xl">Welcome!</div>
         <h1 className="sr-only">Sign in</h1>
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>

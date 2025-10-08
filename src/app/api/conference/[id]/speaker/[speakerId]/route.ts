@@ -2,52 +2,85 @@ import { updateSpeakerSchema } from "@/app/api/conference/schemas";
 import { conferenceSpeakersTable } from "@/db/schema";
 import ApiError from "@/lib/api-error";
 import { createSuccessResponse } from "@/lib/api-response";
-import { withBodyValidator, withErrorHandling } from "@/lib/api-utils";
+import {
+  withAuthenticatedRequired,
+  withBodyValidator,
+  withErrorHandling,
+} from "@/lib/api-utils";
 import { db } from "@/lib/drizzle";
-import { CONFERENCE_SPEAKER_NOT_EXIST } from "@/lib/error-messages";
+import {
+  CONFERENCE_SPEAKER_NOT_EXIST,
+  NO_PERMISSION,
+} from "@/lib/error-messages";
+import { getConferences } from "@/lib/query";
 import { and, eq } from "drizzle-orm";
-import type { NextRequest } from "next/server";
 
 // Remove a speaker from a conference
 export const DELETE = withErrorHandling(
-  async (
-    _: NextRequest,
-    ctx: RouteContext<"/api/conference/[id]/speaker/[speakerId]">,
-  ) => {
-    const { id: conferenceId, speakerId } = await ctx.params;
+  withAuthenticatedRequired(
+    (session) =>
+      async (
+        _,
+        ctx: RouteContext<"/api/conference/[id]/speaker/[speakerId]">,
+      ) => {
+        const { id: conferenceId, speakerId } = await ctx.params;
 
-    const deleteResult = await db
-      .delete(conferenceSpeakersTable)
-      .where(
-        and(
-          eq(conferenceSpeakersTable.id, speakerId),
-          eq(conferenceSpeakersTable.conferenceId, conferenceId),
-        ),
-      );
+        const conferences = await getConferences({
+          id: conferenceId,
+          pageSize: 1,
+          page: 1,
+        });
+        const conference = conferences?.[0];
+        if (conference.ownerId !== session.userId) {
+          throw new ApiError(NO_PERMISSION, 403);
+        }
 
-    if (deleteResult.rowCount === 0) {
-      throw new ApiError(CONFERENCE_SPEAKER_NOT_EXIST, 404);
-    }
+        const deleteResult = await db
+          .delete(conferenceSpeakersTable)
+          .where(
+            and(
+              eq(conferenceSpeakersTable.id, speakerId),
+              eq(conferenceSpeakersTable.conferenceId, conferenceId),
+            ),
+          );
 
-    return createSuccessResponse(undefined);
-  },
+        if (deleteResult.rowCount === 0) {
+          throw new ApiError(CONFERENCE_SPEAKER_NOT_EXIST, 404);
+        }
+
+        return createSuccessResponse(undefined);
+      },
+  ),
 );
 
 // Update a speaker info
 export const PATCH = withErrorHandling(
-  withBodyValidator(
-    updateSpeakerSchema,
-    async (
-      data,
-      _,
-      ctx: RouteContext<"/api/conference/[id]/speaker/[speakerId]">,
-    ) => {
-      const { id } = await ctx.params;
-      await db
-        .update(conferenceSpeakersTable)
-        .set(data)
-        .where(eq(conferenceSpeakersTable.id, id));
-      return createSuccessResponse(undefined);
-    },
+  withAuthenticatedRequired((session) =>
+    withBodyValidator(
+      updateSpeakerSchema,
+      (data) =>
+        async (
+          _,
+          ctx: RouteContext<"/api/conference/[id]/speaker/[speakerId]">,
+        ) => {
+          const { id } = await ctx.params;
+
+          const conferences = await getConferences({
+            id,
+            pageSize: 1,
+            page: 1,
+          });
+          const conference = conferences?.[0];
+          if (conference.ownerId !== session.userId) {
+            throw new ApiError(NO_PERMISSION, 403);
+          }
+
+          await db
+            .update(conferenceSpeakersTable)
+            .set(data)
+            .where(eq(conferenceSpeakersTable.id, id));
+          return createSuccessResponse(undefined);
+        },
+    ),
   ),
 );

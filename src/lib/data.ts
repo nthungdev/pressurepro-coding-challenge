@@ -1,3 +1,5 @@
+import { Conference, SerializedConference } from "@/app/api/conference/types";
+
 export function parseIsoDate(dateString: string): Date | null {
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) {
@@ -17,4 +19,22 @@ export function parseNumber(str: string | undefined | null): number | null {
   }
 
   return num;
+}
+
+export function serializeConference(
+  conference: Conference,
+): SerializedConference {
+  return {
+    ...conference,
+    date: conference.date.toISOString(),
+  };
+}
+
+export function deserializeConference(
+  serializedConference: SerializedConference,
+): Conference {
+  return {
+    ...serializedConference,
+    date: new Date(serializedConference.date),
+  };
 }

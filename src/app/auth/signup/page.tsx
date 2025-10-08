@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PASSWORDS_NOT_MATCH } from "@/lib/error-messages";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/router";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import z from "zod";
@@ -25,6 +25,7 @@ type SignUpFormData = z.infer<typeof signUpFormSchema>;
 
 export default function SignUpPage() {
   const [isPending, startTransition] = useTransition();
+  const { push } = useRouter();
 
   const {
     register,
@@ -43,13 +44,13 @@ export default function SignUpPage() {
           password: data.password,
         }),
       });
-      redirect("/auth/signin");
+      push("/auth/signin");
     });
   }
 
   return (
-    <div className="bg-secondary sm:bg-primary min-h-screen flex items-center justify-center">
-      <div className="p-8 w-full max-w-full sm:max-w-sm mx-auto bg-secondary space-y-8">
+    <div className="bg-primary-foreground sm:bg-accent min-h-screen flex items-center justify-center">
+      <div className="p-8 w-full max-w-full sm:max-w-sm mx-auto bg-primary-foreground space-y-8">
         <div className="text-4xl">Welcome!</div>
         <h1 className="sr-only">Sign up</h1>
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>

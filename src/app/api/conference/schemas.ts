@@ -1,12 +1,12 @@
 import z from "zod";
 
 export const conferenceSchema = z.object({
-  name: z.string(),
-  description: z.string(),
+  name: z.string().nonempty(),
+  description: z.string().nonempty(),
   date: z.iso.datetime(),
-  location: z.string(),
-  price: z.number(),
-  maxAttendees: z.number(),
+  location: z.string().nonempty(),
+  price: z.number().min(0),
+  maxAttendees: z.number().gt(0),
   isFeatured: z.boolean(),
 });
 
@@ -30,10 +30,10 @@ export const createTagsSchema = z.object({
 });
 
 export const createSpeakerSchema = z.object({
-  name: z.string(),
-  title: z.string(),
-  company: z.string(),
-  bio: z.string(),
+  name: z.string().nonempty(),
+  title: z.string().nonempty(),
+  company: z.string().nonempty(),
+  bio: z.string().nonempty(),
 });
 
 export const updateSpeakerSchema = createSpeakerSchema

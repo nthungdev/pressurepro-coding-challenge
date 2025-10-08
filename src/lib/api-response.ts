@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export type ErrorDetail<T> = {
+export type ErrorDetail<T = undefined> = {
   message: string;
   detail?: T;
 };
@@ -12,13 +12,15 @@ export type ErrorApiResponse<T = undefined> = {
 
 export type SuccessApiResponse<T = undefined> = {
   success: true;
-  data?: T;
+  data: T;
 };
 
-export type ApiResponse<T> = ErrorApiResponse | SuccessApiResponse<T>;
+export type ApiResponse<T, E = unknown> =
+  | ErrorApiResponse<E>
+  | SuccessApiResponse<T>;
 
 export function createSuccessResponse<T = undefined>(
-  data?: T,
+  data: T,
   status: number = 200,
 ) {
   return NextResponse.json<SuccessApiResponse<T>>(
@@ -29,7 +31,10 @@ export function createSuccessResponse<T = undefined>(
     { status },
   );
 }
-export function createErrorResponse<T>(error: ErrorDetail<T>, status: number) {
+export function createErrorResponse<T = undefined>(
+  error: ErrorDetail<T>,
+  status: number,
+) {
   return NextResponse.json<ErrorApiResponse<T>>(
     {
       success: false,

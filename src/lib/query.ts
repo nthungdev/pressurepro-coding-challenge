@@ -1,3 +1,5 @@
+import { and, eq, gte, inArray, like, lte } from "drizzle-orm";
+import type { PgSelect } from "drizzle-orm/pg-core";
 import type { Conference } from "@/app/api/conference/types";
 import {
   conferenceSpeakersTable,
@@ -6,8 +8,6 @@ import {
   tagsTable,
 } from "@/db/schema";
 import { db } from "@/lib/drizzle";
-import { and, eq, gte, inArray, like, lte } from "drizzle-orm";
-import type { PgSelect } from "drizzle-orm/pg-core";
 import "server-only";
 
 type ConferenceRow = typeof conferencesTable.$inferSelect;
@@ -19,15 +19,16 @@ type AggregatedConference = ConferenceRow & {
 };
 
 export async function getConferences(options: {
-  id?: string | null;
-  name?: string | null;
-  startDate?: Date | null;
-  endDate?: Date | null;
-  priceFrom?: number | null;
-  priceTo?: number | null;
-  tags?: string[] | null;
   page: number;
   pageSize: number;
+  id?: string;
+  name?: string;
+  startDate?: Date;
+  endDate?: Date;
+  priceFrom?: number;
+  priceTo?: number;
+  tags?: string[];
+  ownerId?: string;
 }) {
   const {
     id,
@@ -39,6 +40,7 @@ export async function getConferences(options: {
     tags,
     page,
     pageSize,
+    ownerId,
   } = options;
 
   const conferenceTagNamesQuery = db
@@ -67,6 +69,7 @@ export async function getConferences(options: {
             ? gte(conferencesTable.price, priceFrom.toString())
             : undefined,
           priceTo ? lte(conferencesTable.price, priceTo.toString()) : undefined,
+          ownerId ? eq(conferencesTable.ownerId, ownerId) : undefined,
         ),
       )
       .leftJoin(

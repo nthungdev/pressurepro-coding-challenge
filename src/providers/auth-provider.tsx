@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext } from "react";
 import type { ReactNode } from "react";
+import { createContext, useContext } from "react";
 import type { verifySession } from "@/lib/session";
 
 type AuthContextType = Awaited<ReturnType<typeof verifySession>>;

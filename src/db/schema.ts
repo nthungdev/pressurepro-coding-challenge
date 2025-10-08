@@ -19,6 +19,9 @@ export const usersTable = pgTable("users", {
 
 export const conferencesTable = pgTable("conferences", {
   id: uuid().primaryKey().defaultRandom(),
+  ownerId: uuid()
+    .references(() => usersTable.id)
+    .notNull(),
   name: varchar({ length: 255 }).notNull(),
   description: text().notNull(),
   date: timestamp({ withTimezone: true }).notNull(),

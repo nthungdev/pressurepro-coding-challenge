@@ -1,17 +1,18 @@
-import { CONFERENCE_NOT_EXIST } from "@/lib/error-messages";
+import ApiError from "@/lib/api-error";
 import { conferencesTable } from "@/db/schema";
+import { CONFERENCE_NOT_EXIST, NO_PERMISSION } from "@/lib/error-messages";
 import { createSuccessResponse } from "@/lib/api-response";
 import { db } from "@/lib/drizzle";
 import { eq } from "drizzle-orm";
+import { getConferences } from "@/lib/query";
 import type { NextRequest } from "next/server";
-import { withBodyValidator, withErrorHandling } from "@/lib/api-utils";
 import {
-  createConferenceSchema,
-  updateConferenceSchema,
-} from "@/app/api/conference/schemas";
-import type { ConferencePostResponseData } from "@/app/api/conference/types";
-import { formatConference, getConferences } from "@/lib/query";
-import ApiError from "@/lib/api-error";
+  withAuthenticatedRequired,
+  withBodyValidator,
+  withErrorHandling,
+} from "@/lib/api-utils";
+import { updateConferenceSchema } from "@/app/api/conference/schemas";
+import { serializeConference } from "@/lib/data";
 
 // Get a conference by Id
 export const GET = withErrorHandling(
@@ -19,72 +20,74 @@ export const GET = withErrorHandling(
     const { id } = await ctx.params;
     const conferences = await getConferences({ id, page: 1, pageSize: 1 });
     const conference = conferences?.[0];
-    return createSuccessResponse({ conference });
-  },
-);
-
-// Create a new conference
-export const POST = withErrorHandling(
-  withBodyValidator(createConferenceSchema, async (data, _) => {
-    const insertConferenceResult = await db
-      .insert(conferencesTable)
-      .values({
-        name: data.name,
-        location: data.location,
-        description: data.description,
-        maxAttendees: data.maxAttendees,
-        price: data.price.toString(),
-        date: new Date(data.date),
-        isFeatured: data.isFeatured,
-      })
-      .returning();
-
-    const conferenceRecord = insertConferenceResult?.[0];
-    const conference = formatConference({
-      ...conferenceRecord,
-      speakers: [],
-      tags: [],
+    return createSuccessResponse({
+      conference: serializeConference(conference),
     });
-
-    return createSuccessResponse<ConferencePostResponseData>(conference);
-  }),
+  },
 );
 
 // Delete a conference
 export const DELETE = withErrorHandling(
-  async (_: NextRequest, ctx: RouteContext<"/api/conference/[id]">) => {
-    const { id } = await ctx.params;
-    const deleteResult = await db
-      .delete(conferencesTable)
-      .where(eq(conferencesTable.id, id));
+  withAuthenticatedRequired(
+    (session) =>
+      async (_: NextRequest, ctx: RouteContext<"/api/conference/[id]">) => {
+        const { id } = await ctx.params;
 
-    if (deleteResult.rowCount === 0) {
-      throw new ApiError(CONFERENCE_NOT_EXIST, 404);
-    }
+        const conferences = await getConferences({
+          id,
+          pageSize: 1,
+          page: 1,
+        });
+        const conference = conferences?.[0];
+        if (conference.ownerId !== session.userId) {
+          throw new ApiError(NO_PERMISSION, 403);
+        }
 
-    return createSuccessResponse(undefined);
-  },
+        const deleteResult = await db
+          .delete(conferencesTable)
+          .where(eq(conferencesTable.id, id));
+
+        if (deleteResult.rowCount === 0) {
+          throw new ApiError(CONFERENCE_NOT_EXIST, 404);
+        }
+
+        return createSuccessResponse(undefined);
+      },
+  ),
 );
 
 // Update a conference
 export const PATCH = withErrorHandling(
-  withBodyValidator(
-    updateConferenceSchema,
-    async (data, _, ctx: RouteContext<"/api/conference/[id]">) => {
-      const { id } = await ctx.params;
-      await db
-        .update(conferencesTable)
-        .set({
-          name: data.name,
-          location: data.location,
-          description: data.description,
-          maxAttendees: data.maxAttendees,
-          price: data.price?.toString(),
-          date: data.date ? new Date(data.date) : undefined,
-          isFeatured: data.isFeatured,
-        })
-        .where(eq(conferencesTable.id, id));
-      return createSuccessResponse(undefined);
-    },
+  withAuthenticatedRequired((session) =>
+    withBodyValidator(
+      updateConferenceSchema,
+      (data) => async (_, ctx: RouteContext<"/api/conference/[id]">) => {
+        const { id } = await ctx.params;
+
+        const conferences = await getConferences({
+          id,
+          pageSize: 1,
+          page: 1,
+        });
+        const conference = conferences?.[0];
+        if (conference.ownerId !== session.userId) {
+          throw new ApiError(NO_PERMISSION, 403);
+        }
+
+        await db
+          .update(conferencesTable)
+          .set({
+            name: data.name,
+            location: data.location,
+            description: data.description,
+            maxAttendees: data.maxAttendees,
+            price: data.price?.toString(),
+            date: data.date ? new Date(data.date) : undefined,
+            isFeatured: data.isFeatured,
+          })
+          .where(eq(conferencesTable.id, id));
+        return createSuccessResponse(undefined);
+      },
+    ),
   ),
 );

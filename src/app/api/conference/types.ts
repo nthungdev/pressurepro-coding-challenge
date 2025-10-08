@@ -1,5 +1,5 @@
-import type { ApiResponse } from "@/lib/api-response";
 import type { conferenceSpeakersTable } from "@/db/schema";
+import type { ApiResponse } from "@/lib/api-response";
 
 export type ConferenceSpeaker = Omit<
   typeof conferenceSpeakersTable.$inferSelect,
@@ -7,6 +7,7 @@ export type ConferenceSpeaker = Omit<
 >;
 export type Conference = {
   id: string;
+  ownerId: string;
   name: string;
   description: string;
   location: string;
@@ -26,3 +27,12 @@ export type ConferenceTagsPutResponseData = {
   addCount: number;
   deleteCount: number;
 };
+
+export type SerializedConference = Omit<Conference, "date"> & { date: string };
+
+export type ConferenceGetResponseData = {
+  count: number;
+  conferences: SerializedConference[];
+};
+
+export type ConferenceGetResponse = ApiResponse<ConferenceGetResponseData>;

@@ -1,7 +1,7 @@
 import "server-only";
-import { cookies } from "next/headers";
-import { SignJWT, jwtVerify } from "jose";
 import type { JWTPayload } from "jose";
+import { jwtVerify, SignJWT } from "jose";
+import { cookies } from "next/headers";
 import { cache } from "react";
 
 const SESSION_COOKIE_NAME = "session";
@@ -54,23 +54,43 @@ export async function createSession(payload: SessionPayload) {
 }
 
 export const verifySession = cache(async () => {
+  const defaultValue: SessionResult = {
+    isAuth: false,
+    email: null,
+    userId: null,
+  };
+
   const sessionCookie = (await cookies()).get("session")?.value;
   if (!sessionCookie) {
-    return { isAuth: false };
+    return defaultValue;
   }
 
   const session = await decrypt(sessionCookie);
 
   if (!session?.userId) {
-    return { isAuth: false };
+    return defaultValue;
   }
 
   return {
     isAuth: true,
     email: session.email,
     userId: session.userId,
-  };
+  } as SessionResult;
 });
+
+export type UnauthenticatedSessionResult = {
+  isAuth: false;
+  email: null;
+  userId: null;
+};
+export type AuthenticatedSessionResult = {
+  isAuth: true;
+  email: string;
+  userId: string;
+};
+export type SessionResult =
+  | UnauthenticatedSessionResult
+  | AuthenticatedSessionResult;
 
 export async function deleteSession() {
   const cookieStore = await cookies();

@@ -1,14 +1,17 @@
 import "server-only";
+
 import { createErrorResponse } from "@/lib/api-response";
 import {
   INTERNAL,
   INVALID_BODY,
   INVALID_PROPERTIES,
+  NO_PERMISSION,
 } from "@/lib/error-messages";
 import type { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 import type { AppRouteHandlerRoutes } from "../../.next/types/routes";
 import ApiError from "@/lib/api-error";
+import { type AuthenticatedSessionResult, verifySession } from "@/lib/session";
 
 /**
  * Higher order function to validate the request's body
@@ -20,9 +23,7 @@ export function withBodyValidator<
   schema: T,
   requestHandler: (
     data: z.infer<T>,
-    request: NextRequest,
-    ctx: RouteContext<R>,
-  ) => Promise<NextResponse>,
+  ) => (request: NextRequest, ctx: RouteContext<R>) => Promise<NextResponse>,
 ) {
   return async (request: NextRequest, ctx: RouteContext<R>) => {
     const body = await request.json().catch((error) => {
@@ -43,7 +44,7 @@ export function withBodyValidator<
       );
     }
 
-    return requestHandler(validation.data, request, ctx);
+    return requestHandler(validation.data)(request, ctx);
   };
 }
 
@@ -68,5 +69,20 @@ export function withErrorHandling<R extends AppRouteHandlerRoutes>(
       console.error(error);
       return createErrorResponse({ message: INTERNAL }, 500);
     }
+  };
+}
+
+export function withAuthenticatedRequired<R extends AppRouteHandlerRoutes>(
+  handler: (
+    session: AuthenticatedSessionResult,
+  ) => (req: NextRequest, ctx: RouteContext<R>) => Promise<NextResponse>,
+) {
+  return async (req: NextRequest, ctx: RouteContext<R>) => {
+    const session = await verifySession();
+    if (!session.isAuth) {
+      return createErrorResponse({ message: NO_PERMISSION }, 401);
+    }
+
+    return handler(session)(req, ctx);
   };
 }
