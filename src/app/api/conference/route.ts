@@ -13,14 +13,11 @@ import {
 import { parseIsoDate, parseNumber, serializeConference } from "@/lib/data";
 import { db } from "@/lib/drizzle";
 import { formatConference, getConferences } from "@/lib/query";
-import { verifySession } from "@/lib/session";
 
 const DEFAULT_PAGE_SIZE = 20;
 
 // Get a list of conferences
 export const GET = withErrorHandling(async (request) => {
-  const session = await verifySession();
-
   const { searchParams } = request.nextUrl;
   const page = Number(searchParams.get("page") ?? 1);
   const pageSize = Number(searchParams.get("pageSize") ?? DEFAULT_PAGE_SIZE);
@@ -35,7 +32,7 @@ export const GET = withErrorHandling(async (request) => {
     ?.split(",")
     .map((t) => t.trim())
     .filter((t) => t !== "");
-  const ownerId = session.userId ?? undefined;
+  const ownerId = searchParams.get("ownerId") ?? undefined;
 
   const conferences = await getConferences({
     name,

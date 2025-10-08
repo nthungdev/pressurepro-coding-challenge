@@ -44,6 +44,19 @@ export const conferenceSpeakersTable = pgTable("conference_speakers", {
     .notNull(),
 });
 
+export const userJoinConferencesTable = pgTable(
+  "user_join_conferences",
+  {
+    conferenceId: uuid()
+      .references(() => conferencesTable.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: uuid()
+      .references(() => usersTable.id)
+      .notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.conferenceId, table.userId] })],
+);
+
 export const userFavoriteConferencesTable = pgTable(
   "user_favorite_conferences",
   {
