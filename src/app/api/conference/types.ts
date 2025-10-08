@@ -43,3 +43,9 @@ export type ConferenceByIdGetResponseData = {
 
 export type ConferenceByIdGetResponse =
   ApiResponse<ConferenceByIdGetResponseData>;
+
+export type JoinConferencePostResponse = ApiResponse<undefined>;
+export type JoinConferenceDeleteResponse = ApiResponse<undefined>;
+
+export type FavoriteConferencePostResponse = ApiResponse<undefined>;
+export type FavoriteConferenceDeleteResponse = ApiResponse<undefined>;

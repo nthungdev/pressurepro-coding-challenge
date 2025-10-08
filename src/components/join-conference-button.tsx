@@ -1,14 +1,17 @@
 import { useMutation } from "@tanstack/react-query";
 import { useTransition } from "react";
 import { twMerge } from "tailwind-merge";
-import type { JoinedConferencesGetResponse } from "@/app/api/me/types";
+import type {
+  JoinConferenceDeleteResponse,
+  JoinConferencePostResponse,
+} from "@/app/api/conference/types";
 import { useConferenceStore } from "@/app/stores/conference-store";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
 async function postJoinConference(id: string) {
   const url = `/api/conference/${id}/join`;
-  const result: JoinedConferencesGetResponse = await fetch(url, {
+  const result: JoinConferencePostResponse = await fetch(url, {
     method: "POST",
   }).then((r) => r.json());
   return result;
@@ -16,19 +19,19 @@ async function postJoinConference(id: string) {
 
 async function postLeaveConference(id: string) {
   const url = `/api/conference/${id}/join`;
-  const result: JoinedConferencesGetResponse = await fetch(url, {
+  const result: JoinConferenceDeleteResponse = await fetch(url, {
     method: "DELETE",
   }).then((r) => r.json());
   return result;
 }
 
-interface JoinConferenceButton {
+interface JoinConferenceButtonProps {
   conferenceId: string;
 }
 
 export default function JoinConferenceButton({
   conferenceId,
-}: JoinConferenceButton) {
+}: JoinConferenceButtonProps) {
   const [isPending, transition] = useTransition();
   const joinedConferenceIds = useConferenceStore((s) => s.joinedConferenceIds);
   const joinConference = useConferenceStore((s) => s.joinConference);

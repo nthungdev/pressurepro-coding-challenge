@@ -5,6 +5,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { use } from "react";
 import type { ConferenceByIdGetResponse } from "@/app/api/conference/types";
+import FavoriteConferenceButton from "@/components/favorite-conference-button";
 import JoinConferenceButton from "@/components/join-conference-button";
 import { deserializeConference, formatDate, formatPrice } from "@/lib/data";
 
@@ -71,6 +72,10 @@ export default function ConferencePage({
 
       <div className="h-full overflow-y-auto relative md:max-w-5xl mx-auto flex flex-col md:flex-row px-4">
         <div className="pt-4 pb-80 md:pt-8 md:pb-40 md:w-3/5 space-y-4 md:space-y-8">
+          <div>
+            <FavoriteConferenceButton conferenceId={conference.id} />
+          </div>
+
           <div className="text-lg md:text-xl text-gray-600">
             {formattedDate}
           </div>
