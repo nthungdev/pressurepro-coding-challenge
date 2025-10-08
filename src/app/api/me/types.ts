@@ -8,3 +8,12 @@ export type FavoriteConferencesGetData = {
 
 export type FavoriteConferencesGetResponse =
   ApiResponse<FavoriteConferencesGetData>;
+
+export type JoinedConferencesGetData = {
+  joinedConferences: {
+    id: string;
+  }[];
+};
+
+export type JoinedConferencesGetResponse =
+  ApiResponse<FavoriteConferencesGetData>;
