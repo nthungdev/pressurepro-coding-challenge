@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import z from "zod";
 import { updateSpeakerSchema } from "@/app/api/conference/schemas";
+import type { ConferenceSpeakerPatchData } from "@/app/api/conference/types";
 import { conferenceSpeakersTable } from "@/db/schema";
 import ApiError from "@/lib/api-error";
 import { createErrorResponse, createSuccessResponse } from "@/lib/api-response";
@@ -109,7 +110,7 @@ export const PATCH = withErrorHandling(
             throw new ApiError(NO_PERMISSION, 403);
           }
 
-          await db
+          const result = await db
             .update(conferenceSpeakersTable)
             .set(data)
             .where(
@@ -117,8 +118,10 @@ export const PATCH = withErrorHandling(
                 eq(conferenceSpeakersTable.id, speakerId),
                 eq(conferenceSpeakersTable.conferenceId, conferenceId),
               ),
-            );
-          return createSuccessResponse(undefined);
+            )
+            .returning();
+          const speaker = result?.[0];
+          return createSuccessResponse<ConferenceSpeakerPatchData>({ speaker });
         },
     ),
   ),

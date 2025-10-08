@@ -55,3 +55,8 @@ export function formatDate(date: Date, variant: "full" | "date" = "full") {
   if (variant === "full") return format(date, "MMMM d '·' haaa");
   else return format(date, "EEEE, MMMM d");
 }
+
+/** Get the time in format 00:00 */
+export function getTimeString(date: Date) {
+  return format(date, "HH:mm");
+}

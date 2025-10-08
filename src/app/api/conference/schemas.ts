@@ -25,7 +25,7 @@ export const updateConferenceSchema = conferenceSchema
     path: [], // attach the error to the root
   });
 
-export const createTagsSchema = z.object({
+export const setTagsSchema = z.object({
   tags: z.array(z.string()).nonempty(),
 });
 

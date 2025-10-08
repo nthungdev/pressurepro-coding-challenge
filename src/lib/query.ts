@@ -9,6 +9,7 @@ import {
   userFavoriteConferencesTable,
   userJoinConferencesTable,
 } from "@/db/schema";
+
 import { db } from "@/lib/drizzle";
 import "server-only";
 
@@ -16,7 +17,7 @@ type ConferenceRow = typeof conferencesTable.$inferSelect;
 type ConferenceSpeakerRow = typeof conferenceSpeakersTable.$inferSelect;
 
 type AggregatedConference = ConferenceRow & {
-  speakers: Omit<ConferenceSpeakerRow, "conferenceId">[];
+  speakers: ConferenceSpeakerRow[];
   tags: string[];
 };
 
@@ -45,19 +46,7 @@ export async function getConferences(options: {
     ownerId,
   } = options;
 
-  const conferenceTagNamesQuery = db
-    .select()
-    .from(conferenceTagsTable)
-    .innerJoin(
-      tagsTable,
-      and(
-        eq(conferenceTagsTable.tagId, tagsTable.id),
-        tags?.length ? inArray(tagsTable.name, tags) : undefined,
-      ),
-    )
-    .as("conference_tag_names");
-
-  const rows = await withPagination(
+  const conferenceQuery = withPagination(
     db
       .select()
       .from(conferencesTable)
@@ -74,21 +63,37 @@ export async function getConferences(options: {
           ownerId ? eq(conferencesTable.ownerId, ownerId) : undefined,
         ),
       )
-      .leftJoin(
-        conferenceSpeakersTable,
-        eq(conferencesTable.id, conferenceSpeakersTable.conferenceId),
-      )
-      .leftJoin(
-        conferenceTagNamesQuery,
-        eq(
-          conferencesTable.id,
-          conferenceTagNamesQuery.conference_tags.conferenceId,
-        ),
-      )
       .$dynamic(),
     page,
     pageSize,
-  );
+  ).as("conferences");
+
+  const conferenceTagNamesQuery = db
+    .select()
+    .from(conferenceTagsTable)
+    .innerJoin(
+      tagsTable,
+      and(
+        eq(conferenceTagsTable.tagId, tagsTable.id),
+        tags?.length ? inArray(tagsTable.name, tags) : undefined,
+      ),
+    )
+    .as("conference_tag_names");
+
+  const rows = await db
+    .select()
+    .from(conferenceQuery)
+    .leftJoin(
+      conferenceSpeakersTable,
+      eq(conferencesTable.id, conferenceSpeakersTable.conferenceId),
+    )
+    .leftJoin(
+      conferenceTagNamesQuery,
+      eq(
+        conferencesTable.id,
+        conferenceTagNamesQuery.conference_tags.conferenceId,
+      ),
+    );
 
   // aggregate speakers & tags into each conference
   const result = rows.reduce<Record<string, AggregatedConference>>(
@@ -99,12 +104,16 @@ export async function getConferences(options: {
       if (!acc[conference.id]) {
         acc[conference.id] = { ...conference, speakers: [], tags: [] };
       }
-      if (conference_speaker) {
-        // take out conferenceId
-        const { conferenceId: _, ...speaker } = conference_speaker;
-        acc[conference.id].speakers.push(speaker);
+      if (
+        conference_speaker &&
+        acc[conference.id].speakers.every((s) => s.id !== conference_speaker.id)
+      ) {
+        acc[conference.id].speakers.push(conference_speaker);
       }
-      if (conference_tag) {
+      if (
+        conference_tag &&
+        acc[conference.id].tags.every((t) => t !== conference_tag.name)
+      ) {
         const { name } = conference_tag;
         // name could be null despite infered type
         if (name) acc[conference.id].tags.push(name);

@@ -2,26 +2,22 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { use } from "react";
-import type { ConferenceByIdGetResponse } from "@/app/api/conference/types";
 import FavoriteConferenceButton from "@/components/favorite-conference-button";
 import JoinConferenceButton from "@/components/join-conference-button";
+import TagChips from "@/components/tag-chips";
+import useUser from "@/hooks/useUser";
 import { deserializeConference, formatDate, formatPrice } from "@/lib/data";
-
-async function fetchConferenceById(id: string) {
-  const url = new URL(`/api/conference/${id}`, window.location.origin);
-  const response: ConferenceByIdGetResponse = await fetch(url).then((r) =>
-    r.json(),
-  );
-  return response;
-}
+import { fetchConferenceById } from "@/lib/fetches";
 
 export default function ConferencePage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const user = useUser();
   const { id } = use(params);
   const { data, error, isPending } = useQuery({
     queryKey: ["fetchConferenceById", id],
@@ -60,6 +56,10 @@ export default function ConferencePage({
   const formattedDateFull = formatDate(conference.date);
   const formattedPrice = formatPrice(conference.price);
 
+  const updateConfernceHref = `/admin/conference/${conference.id}/update`;
+
+  const showUpdateLink = conference.ownerId === user?.id;
+
   return (
     <div>
       <Image
@@ -74,6 +74,14 @@ export default function ConferencePage({
         <div className="pt-4 pb-80 md:pt-8 md:pb-40 md:w-3/5 space-y-4 md:space-y-8">
           <div>
             <FavoriteConferenceButton conferenceId={conference.id} />
+          </div>
+
+          <div>
+            {showUpdateLink && (
+              <Link className="text-secondary" href={updateConfernceHref}>
+                Update this conference
+              </Link>
+            )}
           </div>
 
           <div className="text-lg md:text-xl text-gray-600">
@@ -104,13 +112,7 @@ export default function ConferencePage({
           {conference.tags.length !== 0 && (
             <div>
               <h2 className="text-xl mdtext-2xl font-semibold mb-2">Tags</h2>
-              <ul className="flex flex-row flex-wrap gap-4">
-                {conference.tags.map((tag) => (
-                  <span className="px-2 py-1" key={tag}>
-                    {tag}
-                  </span>
-                ))}
-              </ul>
+              <TagChips tags={conference.tags} />
             </div>
           )}
         </div>

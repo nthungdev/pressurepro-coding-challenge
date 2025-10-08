@@ -1,5 +1,5 @@
 import { and, eq, inArray, notInArray } from "drizzle-orm";
-import { createTagsSchema } from "@/app/api/conference/schemas";
+import { setTagsSchema } from "@/app/api/conference/schemas";
 import type { ConferenceTagsPutResponseData } from "@/app/api/conference/types";
 import { conferenceTagsTable, tagsTable } from "@/db/schema";
 import ApiError from "@/lib/api-error";
@@ -17,7 +17,7 @@ import { getConferences } from "@/lib/query";
 export const PUT = withErrorHandling(
   withAuthenticatedRequired((session) =>
     withBodyValidator(
-      createTagsSchema,
+      setTagsSchema,
       (data) => async (_, ctx: RouteContext<"/api/conference/[id]/tags">) => {
         const { id: conferenceId } = await ctx.params;
 

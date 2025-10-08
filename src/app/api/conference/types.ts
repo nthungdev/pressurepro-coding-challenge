@@ -1,10 +1,8 @@
 import type { conferenceSpeakersTable } from "@/db/schema";
 import type { ApiResponse } from "@/lib/api-response";
 
-export type ConferenceSpeaker = Omit<
-  typeof conferenceSpeakersTable.$inferSelect,
-  "conferenceId"
->;
+export type ConferenceSpeaker = typeof conferenceSpeakersTable.$inferSelect;
+
 export type Conference = {
   id: string;
   ownerId: string;
@@ -49,3 +47,13 @@ export type JoinConferenceDeleteResponse = ApiResponse<undefined>;
 
 export type FavoriteConferencePostResponse = ApiResponse<undefined>;
 export type FavoriteConferenceDeleteResponse = ApiResponse<undefined>;
+
+export type ConferenceSpeakerPostData = {
+  speaker: ConferenceSpeaker;
+};
+export type ConferenceSpeakerPostResponse =
+  ApiResponse<ConferenceSpeakerPostData>;
+
+export type ConferenceSpeakerPatchData = ConferenceSpeakerPostData;
+export type ConferenceSpeakerPatchResponse =
+  ApiResponse<ConferenceSpeakerPostData>;

@@ -5,12 +5,16 @@ import { Label } from "@radix-ui/react-label";
 import { parse } from "date-fns";
 import { ChevronDownIcon } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
-import type z from "zod";
-import { conferenceSchema } from "@/app/api/conference/schemas";
-import type { ConferencePostResponse } from "@/app/api/conference/types";
+import { updateConferenceSchema } from "@/app/api/conference/schemas";
+import type { Conference } from "@/app/api/conference/types";
+import AddSpeakerDialog, {
+  type AddSpeakerDialogProps,
+} from "@/components/add-speaker-dialog";
+import EditTagsDialog from "@/components/edit-tags-dialog";
+import SpeakerList, { type SpeakerListProps } from "@/components/speaker-list";
+import TagChips from "@/components/tag-chips";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,17 +24,23 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { getTimeString, serializeConference } from "@/lib/data";
 import { UNKNOWN_ERROR } from "@/lib/error-messages";
+import { type UpdateConferenceFormData, updateConference } from "@/lib/fetches";
 
-type CreateConferenceFormData = z.infer<typeof conferenceSchema>;
+interface UpdateConferencePageProps {
+  conference: Conference;
+}
 
-export default function () {
+export default function UpdateConferencePage({
+  conference: initialConference,
+}: UpdateConferencePageProps) {
+  const [conference, setConference] = useState(initialConference);
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(undefined);
-  const [time, setTime] = useState("");
+  const [date, setDate] = useState<Date | undefined>(conference.date);
+  const [time, setTime] = useState(getTimeString(conference.date));
   const [submitError, setSubmitError] = useState("");
-  const { push } = useRouter();
 
   const {
     register,
@@ -38,38 +48,56 @@ export default function () {
     formState: { errors },
     setValue,
     control,
-  } = useForm<CreateConferenceFormData>({
-    defaultValues: {
-      date: "",
-      isFeatured: false,
-      maxAttendees: 0,
-      price: 0,
-    },
-    resolver: zodResolver(conferenceSchema),
+  } = useForm<UpdateConferenceFormData>({
+    defaultValues: serializeConference(conference),
+    resolver: zodResolver(updateConferenceSchema),
   });
 
-  function onSubmit(data: CreateConferenceFormData) {
+  function onSubmit(data: UpdateConferenceFormData) {
     startTransition(async () => {
       setSubmitError("");
       try {
-        const response: ConferencePostResponse = await fetch(
-          "/api/conference",
-          {
-            method: "POST",
-            body: JSON.stringify(data),
-          },
-        ).then((r) => r.json());
+        const response = await updateConference(conference.id, data);
         if (!response.success) {
           setSubmitError(response.error.message);
           return;
         }
-        push("/admin");
       } catch (error) {
         console.error(error);
         setSubmitError(UNKNOWN_ERROR);
       }
     });
   }
+
+  function handleTagSet(tags: string[]) {
+    setConference({
+      ...conference,
+      tags,
+    });
+  }
+
+  const handleSpeakerAdded: AddSpeakerDialogProps["onSuccess"] = (speaker) => {
+    setConference({
+      ...conference,
+      speakers: [...conference.speakers, speaker],
+    });
+  };
+
+  const handleSpeakerEdited: SpeakerListProps["onEdited"] = (speaker) => {
+    setConference({
+      ...conference,
+      speakers: conference.speakers.map((s) =>
+        s.id === speaker.id ? speaker : s,
+      ),
+    });
+  };
+
+  const handleSpeakerRemoved: SpeakerListProps["onRemoved"] = (speaker) => {
+    setConference({
+      ...conference,
+      speakers: conference.speakers.filter((s) => s.id !== speaker.id),
+    });
+  };
 
   useEffect(() => {
     let dateString = "";
@@ -82,27 +110,49 @@ export default function () {
     }
   }, [date, time, setValue]);
 
+  const detailHref = `/conferences/${conference.id}`;
+
   return (
-    <div className="px-4 pb-10" suppressHydrationWarning>
-      <div className="max-w-md mx-auto space-y-8 pt-10 pb-4">
-        <div>
+    <div className="px-4 pb-10">
+      <form
+        className="max-w-md mx-auto space-y-8 pt-10 pb-4"
+        onSubmit={handleSubmit(onSubmit)}
+      >
+        <div className="space-y-2 flex flex-col">
           <Link href="/admin" replace>
             <span className="text-sm text-accent">Back to Admin</span>
           </Link>
+          <Link href={detailHref} replace>
+            <span className="text-sm text-accent">Go to Details</span>
+          </Link>
         </div>
-        <h1 className="text-4xl font-semibold">Create conference</h1>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <fieldset className="space-y-4" disabled={isPending}>
-            <div>
-              <Label htmlFor="name">Conference title</Label>
-              <Input type="name" {...register("name")} />
+        <div>
+          <div className="flex justify-between items-end">
+            <h1 className="text-2xl md:text-4xl font-semibold">
+              Update conference
+            </h1>
+            <Button variant="secondary" type="submit" disabled={isPending}>
+              Save
+            </Button>
+          </div>
+          {submitError && <p className="text-red-500 text-sm">{submitError}</p>}
+        </div>
+        <div>
+          <fieldset className="space-y-8" disabled={isPending}>
+            <div className="space-y-2">
+              <Label className="block" htmlFor="name">
+                Conference title
+              </Label>
+              <Input className="mt" type="name" {...register("name")} />
               {errors.name && (
                 <p className="text-red-500 text-sm">{errors.name.message}</p>
               )}
             </div>
 
-            <div>
-              <Label htmlFor="description">Description</Label>
+            <div className="space-y-2">
+              <Label className="block" htmlFor="description">
+                Description
+              </Label>
               <Input type="description" {...register("description")} />
               {errors.description && (
                 <p className="text-red-500 text-sm">
@@ -112,8 +162,8 @@ export default function () {
             </div>
 
             <div className="flex flex-row gap-x-4">
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="date-picker" className="px-1">
+              <div className="flex flex-col gap-3 space-y-2">
+                <Label htmlFor="date-picker" className="block">
                   Date
                 </Label>
                 <Popover open={open} onOpenChange={setOpen}>
@@ -156,8 +206,10 @@ export default function () {
                 )}
               </div>
 
-              <div className="flex flex-col gap-3">
-                <Label htmlFor="time">Time</Label>
+              <div className="flex flex-col gap-3 space-y-2">
+                <Label className="block" htmlFor="time">
+                  Time
+                </Label>
                 <Input
                   type="time"
                   value={time}
@@ -169,8 +221,10 @@ export default function () {
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="location">Location</Label>
+            <div className="space-y-2">
+              <Label className="block" htmlFor="location">
+                Location
+              </Label>
               <Input type="text" {...register("location")} />
               {errors.location && (
                 <p className="text-red-500 text-sm">
@@ -179,8 +233,10 @@ export default function () {
               )}
             </div>
 
-            <div>
-              <Label htmlFor="maxAttendees">Max Attendees</Label>
+            <div className="space-y-2">
+              <Label className="block" htmlFor="maxAttendees">
+                Max Attendees
+              </Label>
               <Input
                 type="number"
                 min={1}
@@ -193,8 +249,10 @@ export default function () {
               )}
             </div>
 
-            <div>
-              <Label htmlFor="price">Price (USD)</Label>
+            <div className="space-y-2">
+              <Label className="block" htmlFor="price">
+                Price (USD)
+              </Label>
               <Input
                 type="number"
                 step={0.01}
@@ -206,12 +264,14 @@ export default function () {
               )}
             </div>
 
-            <div>
-              <Label htmlFor="isFeatured">Featured Conference</Label>
+            <div className="space-y-2">
+              <Label className="block" htmlFor="isFeatured">
+                Featured Conference
+              </Label>
               <Checkbox
                 className="block"
                 name="isFeatured"
-                defaultValue="false"
+                defaultChecked={conference.isFeatured}
                 onCheckedChange={(value: boolean) => {
                   setValue("isFeatured", value);
                 }}
@@ -228,15 +288,38 @@ export default function () {
               />
             </div>
 
-            <Button variant="secondary" type="submit" disabled={isPending}>
-              Submit
-            </Button>
-            {submitError && (
-              <p className="text-red-500 text-sm">{submitError}</p>
-            )}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label className="block">Tags</Label>
+                <EditTagsDialog
+                  conferenceId={conference.id}
+                  label={conference.tags.length ? "Edit Tags" : "Add Tags"}
+                  initialTags={conference.tags}
+                  onSuccess={handleTagSet}
+                />
+              </div>
+              <TagChips tags={conference.tags} />
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <Label className="block">Speakers</Label>
+                <AddSpeakerDialog
+                  conferenceId={conference.id}
+                  label="Add Speaker"
+                  onSuccess={handleSpeakerAdded}
+                />
+              </div>
+              <SpeakerList
+                showEditButton
+                speakers={conference.speakers}
+                onEdited={handleSpeakerEdited}
+                onRemoved={handleSpeakerRemoved}
+              />
+            </div>
           </fieldset>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   );
 }

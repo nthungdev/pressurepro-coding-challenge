@@ -1,15 +1,16 @@
-import { conferenceSpeakersTable } from "@/db/schema";
 import { createSpeakerSchema } from "@/app/api/conference/schemas";
+import type { ConferenceSpeakerPostData } from "@/app/api/conference/types";
+import { conferenceSpeakersTable } from "@/db/schema";
+import ApiError from "@/lib/api-error";
 import { createSuccessResponse } from "@/lib/api-response";
-import { db } from "@/lib/drizzle";
 import {
   withAuthenticatedRequired,
   withBodyValidator,
   withErrorHandling,
 } from "@/lib/api-utils";
-import { getConferences } from "@/lib/query";
-import ApiError from "@/lib/api-error";
+import { db } from "@/lib/drizzle";
 import { NO_PERMISSION } from "@/lib/error-messages";
+import { getConferences } from "@/lib/query";
 
 // Add a speaker to a conference
 export const POST = withErrorHandling(
@@ -30,10 +31,13 @@ export const POST = withErrorHandling(
             throw new ApiError(NO_PERMISSION, 403);
           }
 
-          await db
+          const speakers = await db
             .insert(conferenceSpeakersTable)
-            .values({ ...data, conferenceId });
-          return createSuccessResponse(undefined);
+            .values({ ...data, conferenceId })
+            .returning();
+          const speaker = speakers?.[0];
+
+          return createSuccessResponse<ConferenceSpeakerPostData>({ speaker });
         },
     ),
   ),

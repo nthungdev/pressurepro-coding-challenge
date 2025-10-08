@@ -10,3 +10,5 @@ export const CONFERENCE_SPEAKER_NOT_EXIST = "Conference speaker not exist";
 export const NO_FIELDS_TO_UPDATE = "No fields to update";
 export const NO_PERMISSION = "No permission";
 export const UNKNOWN_ERROR = "Something went wrong. Please try again.";
+export const DUPLICATE_TAG = "Duplicate tag.";
+export const EMPTY_TAG = "Tag must not be empty.";
