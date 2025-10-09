@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import UpdateConferencePage from "@/app/admin/conference/[id]/update/update-conference-page";
 import { NO_PERMISSION } from "@/lib/error-messages";
-import { getConferences } from "@/lib/query";
+import { formatConference, getConferences } from "@/lib/query";
 import { verifySession } from "@/lib/session";
 
 export default async function ({
@@ -16,11 +16,13 @@ export default async function ({
     notFound();
   }
 
+  const formattedConference = formatConference(conference);
+
   const session = await verifySession();
 
   if (conference.ownerId !== session.userId) {
     throw new Error(NO_PERMISSION);
   }
 
-  return <UpdateConferencePage conference={conference} />;
+  return <UpdateConferencePage conference={formattedConference} />;
 }
