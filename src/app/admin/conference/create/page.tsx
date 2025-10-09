@@ -11,6 +11,7 @@ import { Controller, useForm } from "react-hook-form";
 import type z from "zod";
 import { conferenceSchema } from "@/app/api/conference/schemas";
 import type { ConferencePostResponse } from "@/app/api/conference/types";
+import AppPage from "@/components/app-page";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -75,7 +76,7 @@ export default function () {
     let dateString = "";
     if (date) {
       const datePart = date.toISOString().split("T")[0];
-      const timePart = `${time}:00`;
+      const timePart = `${time || "00:00"}:00`;
       dateString = `${datePart} ${timePart}`;
       const parsedDate = parse(dateString, "yyyy-MM-dd HH:mm:00", new Date());
       setValue("date", parsedDate.toISOString());
@@ -83,13 +84,8 @@ export default function () {
   }, [date, time, setValue]);
 
   return (
-    <div className="px-4 pb-10" suppressHydrationWarning>
-      <div className="max-w-md mx-auto space-y-8 pt-10 pb-4">
-        <div>
-          <Link href="/admin" replace>
-            <span className="text-sm text-accent">Back to Admin</span>
-          </Link>
-        </div>
+    <AppPage className="pb-10" suppressHydrationWarning>
+      <div className="space-y-8 pb-4">
         <h1 className="text-4xl font-semibold">Create conference</h1>
         <form onSubmit={handleSubmit(onSubmit)}>
           <fieldset className="space-y-4" disabled={isPending}>
@@ -237,6 +233,6 @@ export default function () {
           </fieldset>
         </form>
       </div>
-    </div>
+    </AppPage>
   );
 }

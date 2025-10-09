@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { use } from "react";
+import AppPage from "@/components/app-page";
 import FavoriteConferenceButton from "@/components/favorite-conference-button";
 import JoinConferenceButton from "@/components/join-conference-button";
 import TagChips from "@/components/tag-chips";
@@ -61,7 +62,7 @@ export default function ConferencePage({
   const showUpdateLink = conference.ownerId === user?.id;
 
   return (
-    <div>
+    <AppPage className="px-0 max-w-none pt-0 mt-0">
       <Image
         className="w-full"
         width={1500}
@@ -70,7 +71,7 @@ export default function ConferencePage({
         src="https://assets.superblog.ai/site_cuid_cljwev9k51068503tp9cdl2howu/images/thumbnail-1-1708502143662-compressed.png"
       />
 
-      <div className="h-full overflow-y-auto relative md:max-w-5xl mx-auto flex flex-col md:flex-row px-4">
+      <div className="pb-10 h-full overflow-y-auto relative md:max-w-5xl mx-auto flex flex-col md:flex-row px-4">
         <div className="pt-4 pb-80 md:pt-8 md:pb-40 md:w-3/5 space-y-4 md:space-y-8">
           <div>
             <FavoriteConferenceButton conferenceId={conference.id} />
@@ -126,6 +127,6 @@ export default function ConferencePage({
           </div>
         </div>
       </div>
-    </div>
+    </AppPage>
   );
 }

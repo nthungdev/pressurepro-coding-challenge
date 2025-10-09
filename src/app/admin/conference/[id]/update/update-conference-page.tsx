@@ -12,6 +12,7 @@ import type { Conference } from "@/app/api/conference/types";
 import AddSpeakerDialog, {
   type AddSpeakerDialogProps,
 } from "@/components/add-speaker-dialog";
+import AppPage from "@/components/app-page";
 import EditTagsDialog from "@/components/edit-tags-dialog";
 import SpeakerList, { type SpeakerListProps } from "@/components/speaker-list";
 import TagChips from "@/components/tag-chips";
@@ -103,7 +104,7 @@ export default function UpdateConferencePage({
     let dateString = "";
     if (date) {
       const datePart = date.toISOString().split("T")[0];
-      const timePart = `${time}:00`;
+      const timePart = `${time || "00:00"}:00`;
       dateString = `${datePart} ${timePart}`;
       const parsedDate = parse(dateString, "yyyy-MM-dd HH:mm:00", new Date());
       setValue("date", parsedDate.toISOString());
@@ -113,15 +114,9 @@ export default function UpdateConferencePage({
   const detailHref = `/conferences/${conference.id}`;
 
   return (
-    <div className="px-4 pb-10">
-      <form
-        className="max-w-md mx-auto space-y-8 pt-10 pb-4"
-        onSubmit={handleSubmit(onSubmit)}
-      >
+    <AppPage className="pb-10">
+      <form className="space-y-8 pb-4" onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-2 flex flex-col">
-          <Link href="/admin" replace>
-            <span className="text-sm text-accent">Back to Admin</span>
-          </Link>
           <Link href={detailHref} replace>
             <span className="text-sm text-accent">Go to Details</span>
           </Link>
@@ -320,6 +315,6 @@ export default function UpdateConferencePage({
           </fieldset>
         </div>
       </form>
-    </div>
+    </AppPage>
   );
 }

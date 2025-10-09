@@ -1,25 +1,30 @@
-import Link from "next/link";
+import AddConferenceButton from "@/components/add-conference-button";
+import AppPage from "@/components/app-page";
 import MyConferenceList from "@/components/my-conference-list";
+import { NO_PERMISSION } from "@/lib/error-messages";
+import { verifySession } from "@/lib/session";
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  const session = await verifySession();
+  if (!session.isAuth) {
+    throw new Error(NO_PERMISSION);
+  }
+
   return (
-    <div>
-      <Link href="/" replace>
-        <span className="text-sm text-accent">Back to Home</span>
-      </Link>
+    <AppPage>
+      <h1 className="text-2xl md:text-5xl font-bold">Admin</h1>
 
-      <h1>Admin</h1>
-
-      <div>
-        <Link href="/admin/conference/create">Create new conference</Link>
-        <h2>Manage My Conferences</h2>
-
-        <div>
-          <div className="p-4">
-            <MyConferenceList />
-          </div>
+      <div className="mt-10">
+        <h2 className="text-2xl md:text-4xl font-semibold">
+          Manage My Conferences
+        </h2>
+        <div className="mt-4">
+          <AddConferenceButton />
+        </div>
+        <div className="mt-10">
+          <MyConferenceList />
         </div>
       </div>
-    </div>
+    </AppPage>
   );
 }

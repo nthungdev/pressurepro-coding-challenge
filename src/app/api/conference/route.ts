@@ -47,7 +47,7 @@ export const GET = withErrorHandling(async (request) => {
   });
   return createSuccessResponse<ConferenceGetResponseData>({
     count: conferences.length,
-    conferences: conferences.map(serializeConference),
+    conferences: conferences.map(formatConference).map(serializeConference),
   });
 });
 

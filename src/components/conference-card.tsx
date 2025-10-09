@@ -1,6 +1,7 @@
 import { formatRelative } from "date-fns";
 import Link from "next/link";
 import type { Conference } from "@/app/api/conference/types";
+import { formatPrice } from "@/lib/data";
 
 interface ConferenceCardProps {
   conference: Conference;
@@ -16,7 +17,9 @@ export default function ConferenceCard({ conference }: ConferenceCardProps) {
       </Link>
       <div className="mt-2 text-sm font-semibold">{formattedDate}</div>
       <div className="mt-2 text-sm text-gray-500">{conference.location}</div>
-      <div className="mt-2 font-semibold text-sm">${conference.price}</div>
+      <div className="mt-2 font-semibold text-sm">
+        {formatPrice(conference.price)}
+      </div>
     </div>
   );
 }

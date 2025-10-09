@@ -26,7 +26,10 @@ export type ConferenceTagsPutResponseData = {
   deleteCount: number;
 };
 
-export type SerializedConference = Omit<Conference, "date"> & { date: string };
+export type SerializedConference = Omit<Conference, "date" | "price"> & {
+  date: string;
+  price: string;
+};
 
 export type ConferenceGetResponseData = {
   count: number;

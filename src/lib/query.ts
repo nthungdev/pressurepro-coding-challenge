@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, like, lte } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, like, lte } from "drizzle-orm";
 import type { PgSelect } from "drizzle-orm/pg-core";
 import type { Conference } from "@/app/api/conference/types";
 import {
@@ -68,39 +68,50 @@ export async function getConferences(options: {
     pageSize,
   ).as("conferences");
 
-  const conferenceTagNamesQuery = db
-    .select()
+  const matchedTagsQuery = db
+    .select({
+      conferenceId: conferenceTagsTable.conferenceId,
+    })
     .from(conferenceTagsTable)
-    .innerJoin(
-      tagsTable,
-      and(
-        eq(conferenceTagsTable.tagId, tagsTable.id),
-        tags?.length ? inArray(tagsTable.name, tags) : undefined,
-      ),
-    )
-    .as("conference_tag_names");
+    .innerJoin(tagsTable, eq(conferenceTagsTable.tagId, tagsTable.id))
+    .where(tags?.length ? inArray(tagsTable.name, tags) : undefined)
+    .as("matched_tags");
 
   const rows = await db
     .select()
     .from(conferenceQuery)
     .leftJoin(
       conferenceSpeakersTable,
-      eq(conferencesTable.id, conferenceSpeakersTable.conferenceId),
+      eq(conferenceQuery.id, conferenceSpeakersTable.conferenceId),
     )
     .leftJoin(
-      conferenceTagNamesQuery,
-      eq(
-        conferencesTable.id,
-        conferenceTagNamesQuery.conference_tags.conferenceId,
-      ),
-    );
+      conferenceTagsTable,
+      eq(conferenceQuery.id, conferenceTagsTable.conferenceId),
+    )
+    .leftJoin(tagsTable, eq(tagsTable.id, conferenceTagsTable.tagId))
+    .where(
+      // Apply tag filter only if tags exist
+      tags?.length
+        ? inArray(
+            conferencesTable.id,
+            db
+              .select({ id: matchedTagsQuery.conferenceId })
+              .from(matchedTagsQuery),
+          )
+        : undefined,
+    )
+    .orderBy(desc(conferencesTable.date));
 
   // aggregate speakers & tags into each conference
   const result = rows.reduce<Record<string, AggregatedConference>>(
     (acc, row) => {
       const conference = row.conferences;
       const conference_speaker = row.conference_speakers;
-      const conference_tag = row.conference_tag_names?.tags;
+      const tagName = row.tags?.name;
+
+      // skip row has no tag when we're filtering by tags
+      if (tags?.length && tagName === undefined) return acc;
+
       if (!acc[conference.id]) {
         acc[conference.id] = { ...conference, speakers: [], tags: [] };
       }
@@ -110,20 +121,15 @@ export async function getConferences(options: {
       ) {
         acc[conference.id].speakers.push(conference_speaker);
       }
-      if (
-        conference_tag &&
-        acc[conference.id].tags.every((t) => t !== conference_tag.name)
-      ) {
-        const { name } = conference_tag;
-        // name could be null despite infered type
-        if (name) acc[conference.id].tags.push(name);
+      if (tagName && acc[conference.id].tags.every((t) => t !== tagName)) {
+        acc[conference.id].tags.push(tagName);
       }
       return acc;
     },
     {},
   );
 
-  const conferences = Object.values(result).map(formatConference);
+  const conferences = Object.values(result);
   return conferences;
 }
 

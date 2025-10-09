@@ -31,6 +31,7 @@ export function serializeConference(
   return {
     ...conference,
     date: conference.date.toISOString(),
+    price: conference.price.toString(10),
   };
 }
 
@@ -40,6 +41,7 @@ export function deserializeConference(
   return {
     ...serializedConference,
     date: new Date(serializedConference.date),
+    price: Number(serializedConference.price),
   };
 }
 
