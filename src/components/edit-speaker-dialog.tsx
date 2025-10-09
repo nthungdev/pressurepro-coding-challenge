@@ -6,10 +6,7 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import type z from "zod";
 import { updateSpeakerSchema } from "@/app/api/conference/schemas";
-import type {
-  ConferenceSpeaker,
-  ConferenceSpeakerPostResponse,
-} from "@/app/api/conference/types";
+import type { ConferenceSpeaker } from "@/app/api/conference/types";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

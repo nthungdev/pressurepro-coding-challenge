@@ -1,16 +1,16 @@
-import ApiError from "@/lib/api-error";
 import bcrypt from "bcrypt";
+import { eq } from "drizzle-orm";
+import type { NextRequest } from "next/server";
+import { z } from "zod";
+import type { SignUpPostResponseData } from "@/app/api/auth/signup/types";
+import { usersTable } from "@/db/schema";
+import ApiError from "@/lib/api-error";
 import { createSuccessResponse } from "@/lib/api-response";
 import { db } from "@/lib/drizzle";
-import { eq } from "drizzle-orm";
-import { usersTable } from "@/db/schema";
 import {
   EMAIL_ALREADY_REGISTERED,
   INVALID_PROPERTIES,
 } from "@/lib/error-messages";
-import { z } from "zod";
-import type { NextRequest } from "next/server";
-import type { SignUpPostResponseData } from "@/app/api/auth/signup/types";
 
 const SALT = 10;
 

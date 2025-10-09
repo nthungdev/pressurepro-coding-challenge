@@ -1,19 +1,15 @@
 import bcrypt from "bcrypt";
-import { db } from "@/lib/drizzle";
 import { eq } from "drizzle-orm";
-import { usersTable } from "@/db/schema";
-import { z } from "zod";
-import { createErrorResponse, createSuccessResponse } from "@/lib/api-response";
-import type { SignInPostResponseData } from "@/app/api/auth/signin/types";
 import type { NextRequest } from "next/server";
-import {
-  INTERNAL,
-  INVALID_CREDENTIAL,
-  INVALID_PROPERTIES,
-} from "@/lib/error-messages";
-import { createSession } from "@/lib/session";
-import { withErrorHandling } from "@/lib/api-utils";
+import { z } from "zod";
+import type { SignInPostResponseData } from "@/app/api/auth/signin/types";
+import { usersTable } from "@/db/schema";
 import ApiError from "@/lib/api-error";
+import { createSuccessResponse } from "@/lib/api-response";
+import { withErrorHandling } from "@/lib/api-utils";
+import { db } from "@/lib/drizzle";
+import { INVALID_CREDENTIAL, INVALID_PROPERTIES } from "@/lib/error-messages";
+import { createSession } from "@/lib/session";
 
 const signInSchema = z.object({
   email: z.email(),

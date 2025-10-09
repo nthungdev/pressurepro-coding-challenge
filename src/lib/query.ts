@@ -21,6 +21,9 @@ type AggregatedConference = ConferenceRow & {
   tags: string[];
 };
 
+/**
+ * tags filter are OR operation while the rest are AND operations
+ */
 export async function getConferences(options: {
   page: number;
   pageSize: number;
