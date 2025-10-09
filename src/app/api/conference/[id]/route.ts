@@ -18,7 +18,7 @@ import {
   INVALID_QUERY_PARAMS,
   NO_PERMISSION,
 } from "@/lib/error-messages";
-import { getConferences } from "@/lib/query";
+import { formatConference, getConferences } from "@/lib/query";
 
 // Get a conference by Id
 export const GET = withErrorHandling(
@@ -40,7 +40,8 @@ export const GET = withErrorHandling(
     const conference = conferences?.[0] || null;
 
     return createSuccessResponse<ConferenceByIdGetResponseData>({
-      conference: conference && serializeConference(conference),
+      conference:
+        conference && serializeConference(formatConference(conference)),
     });
   },
 );

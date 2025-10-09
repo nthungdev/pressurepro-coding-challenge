@@ -25,7 +25,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { getTimeString, serializeConference } from "@/lib/data";
+import { getTimeString } from "@/lib/data";
 import { UNKNOWN_ERROR } from "@/lib/error-messages";
 import { type UpdateConferenceFormData, updateConference } from "@/lib/fetches";
 
@@ -50,7 +50,7 @@ export default function UpdateConferencePage({
     setValue,
     control,
   } = useForm<UpdateConferenceFormData>({
-    defaultValues: serializeConference(conference),
+    defaultValues: { ...conference, date: conference.date.toISOString() },
     resolver: zodResolver(updateConferenceSchema),
   });
 
